@@ -74,16 +74,29 @@ const EMPTY_PIXEL = {
   alpha: 0
 }
 
+const colorProfiles = {
+  RGBA: {
+    numberOfChannels: 4
+  }
+}
+
 class PixelMatrix {
-  constructor(width, height, pixels) {
-    if (pixels == null) pixels = new Uint8ClampedArray(width * height * 4)
+  get numberOfChannels() {
+    return this.colorProfile.numberOfChannels
+  }
+  constructor(width, height, colorProfile, pixels) {
+    if (pixels == null)
+      pixels = new Uint8ClampedArray(
+        width * height * colorProfile.numberOfChannels
+      )
     if (width == null)
       throw new Error(`Expected width to be defined, but was ${width}.`)
     if (height == null)
       throw new Error(`Expected height to be defined, but was ${height}.`)
-    this.pixels = pixels
     this.width = width
     this.height = height
+    this.colorProfile = colorProfile
+    this.pixels = pixels
   }
   get(point) {
     if (!this.contains(point)) {
@@ -115,7 +128,7 @@ class PixelMatrix {
         }) but was actually (${x}, ${y})`
       )
     }
-    return y * (this.width * 4) + x * 4
+    return y * (this.width * this.numberOfChannels) + x * this.numberOfChannels
   }
   forEach(fn) {
     for (let y = 0; y < this.height; y++) {
@@ -127,7 +140,11 @@ class PixelMatrix {
     }
   }
   map(fn) {
-    const newPixelMatrix = new PixelMatrix(this.width, this.height)
+    const newPixelMatrix = new PixelMatrix(
+      this.width,
+      this.height,
+      colorProfiles.RGBA
+    )
     this.forEach((pixel, point, pixelMatrix) => {
       const newPixel = fn(pixel, point, pixelMatrix)
       newPixelMatrix.set(newPixel, point)
@@ -155,7 +172,7 @@ class PixelMatrix {
       throw new Error(`Expected an odd window height, but got ${height}`)
     const xRadius = (width - 1) / 2
     const yRadius = (height - 1) / 2
-    const windowMatrix = new PixelMatrix(width, height)
+    const windowMatrix = new PixelMatrix(width, height, colorProfiles.RGBA)
     for (let yOffset = -yRadius; yOffset <= yRadius; yOffset++) {
       for (let xOffset = -xRadius; xOffset <= xRadius; xOffset++) {
         let x = center.x + xOffset
@@ -207,6 +224,7 @@ class ConvolvedImage extends Component {
     const pixelMatrix = new PixelMatrix(
       imageData.width,
       imageData.height,
+      colorProfiles.RGBA,
       imageData.data
     )
     const verticalEdgesDetected = pixelMatrix
