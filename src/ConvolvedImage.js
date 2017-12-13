@@ -40,7 +40,6 @@ class ConvolvedImage extends Component {
     const context = this.canvas.getContext('2d')
     this.context = context
     this.image.onload = () => {
-      console.log('image loaded')
       this.setState({ width: this.image.width, height: this.image.height })
       context.drawImage(this.image, 0, 0, this.image.width, this.image.height)
       const imageData = context.getImageData(
@@ -49,11 +48,11 @@ class ConvolvedImage extends Component {
         this.image.width,
         this.image.height
       )
-      const newImageData = this.convolve(imageData, context)
+      const newImageData = this.convolve(imageData)
       context.putImageData(newImageData, 0, 0)
     }
   }
-  convolve(imageData, context) {
+  convolve(imageData) {
     const pixelMatrix = new PixelMatrix(
       imageData.width,
       imageData.height,
@@ -61,7 +60,11 @@ class ConvolvedImage extends Component {
       imageData.data
     )
     const convolved = pixelMatrix.map(greyscale).map(horizontalEdgeFilter)
-    return new ImageData(convolved.pixels, imageData.width, imageData.height)
+    return new window.ImageData(
+      convolved.pixels,
+      imageData.width,
+      imageData.height
+    )
   }
   render() {
     return (
